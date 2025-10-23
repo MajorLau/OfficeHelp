@@ -29,46 +29,72 @@ namespace OfficeHelp
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.MinimumSize = new Size(800, 600);
+            this.BackColor = Color.White;
 
-            // 创建主面板
+            // 创建顶部工具栏
             Panel topPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 50,
-                BackColor = Color.FromArgb(240, 240, 240)
+                Height = 60,
+                BackColor = Color.FromArgb(248, 249, 250),
+                Padding = new Padding(15, 10, 15, 10)
             };
 
-            // 刷新按钮
-            refreshButton = new Button
+            // 标题标签
+            Label titleLabel = new Label
             {
-                Text = "刷新",
-                Location = new Point(10, 10),
-                Size = new Size(100, 30),
-                BackColor = Color.FromArgb(0, 120, 215),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
+                Text = "Office Help",
+                Font = new Font("Microsoft YaHei UI", 14F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(33, 37, 41),
+                AutoSize = true,
+                Location = new Point(15, 17)
             };
+            topPanel.Controls.Add(titleLabel);
+
+            // 按钮容器（右对齐）
+            Panel buttonPanel = new Panel
+            {
+                Height = 40,
+                Width = 180,
+                Location = new Point(topPanel.Width - 195, 10),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            topPanel.Controls.Add(buttonPanel);
+
+            // 刷新按钮 - 现代扁平设计
+            refreshButton = CreateModernButton("🔄 刷新", 0, Color.FromArgb(13, 110, 253));
             refreshButton.Click += RefreshButton_Click;
-            topPanel.Controls.Add(refreshButton);
+            buttonPanel.Controls.Add(refreshButton);
 
-            // 隐藏到托盘按钮
-            hideButton = new Button
-            {
-                Text = "最小化到托盘",
-                Location = new Point(120, 10),
-                Size = new Size(120, 30),
-                BackColor = Color.FromArgb(0, 120, 215),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
+            // 最小化按钮 - 现代扁平设计
+            hideButton = CreateModernButton("━", 95, Color.FromArgb(108, 117, 125));
+            hideButton.Font = new Font("Arial", 12F, FontStyle.Bold);
             hideButton.Click += HideButton_Click;
-            topPanel.Controls.Add(hideButton);
+            buttonPanel.Controls.Add(hideButton);
+
+            // 添加分隔线
+            Panel separator = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 1,
+                BackColor = Color.FromArgb(222, 226, 230)
+            };
+            topPanel.Controls.Add(separator);
 
             this.Controls.Add(topPanel);
 
             // 创建状态栏
-            StatusStrip statusStrip = new StatusStrip();
-            statusLabel = new ToolStripStatusLabel("正在初始化...");
+            StatusStrip statusStrip = new StatusStrip
+            {
+                BackColor = Color.FromArgb(248, 249, 250),
+                ForeColor = Color.FromArgb(108, 117, 125)
+            };
+            statusLabel = new ToolStripStatusLabel
+            {
+                Text = "⚡ 正在初始化...",
+                Font = new Font("Microsoft YaHei UI", 9F),
+                ForeColor = Color.FromArgb(108, 117, 125)
+            };
             statusStrip.Items.Add(statusLabel);
             this.Controls.Add(statusStrip);
 
@@ -104,11 +130,49 @@ namespace OfficeHelp
             this.FormClosing += MainForm_FormClosing;
         }
 
+        private Button CreateModernButton(string text, int x, Color backgroundColor)
+        {
+            Button btn = new Button
+            {
+                Text = text,
+                Location = new Point(x, 0),
+                Size = new Size(85, 40),
+                BackColor = backgroundColor,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular)
+            };
+
+            btn.FlatAppearance.BorderSize = 0;
+            btn.FlatAppearance.MouseOverBackColor = ControlPaint.Light(backgroundColor, 0.2f);
+            btn.FlatAppearance.MouseDownBackColor = ControlPaint.Dark(backgroundColor, 0.1f);
+
+            // 添加圆角效果（通过重绘）
+            btn.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            };
+
+            // 鼠标悬停效果
+            btn.MouseEnter += (s, e) =>
+            {
+                btn.BackColor = ControlPaint.Light(backgroundColor, 0.2f);
+            };
+
+            btn.MouseLeave += (s, e) =>
+            {
+                btn.BackColor = backgroundColor;
+            };
+
+            return btn;
+        }
+
         private async void InitializeAsync()
         {
             try
             {
-                statusLabel.Text = "正在初始化浏览器...";
+                statusLabel.Text = "🔄 正在初始化浏览器...";
 
                 // 初始化 WebView2
                 await webView.EnsureCoreWebView2Async(null);
@@ -132,12 +196,12 @@ namespace OfficeHelp
                 // 启动定时器
                 checkTimer.Start();
 
-                statusLabel.Text = "就绪 - 已连接到 Outlook";
+                statusLabel.Text = "✅ 就绪 - 已连接到 Outlook";
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"初始化失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                statusLabel.Text = "初始化失败";
+                statusLabel.Text = "❌ 初始化失败";
             }
         }
 
@@ -145,11 +209,11 @@ namespace OfficeHelp
         {
             if (e.IsSuccess)
             {
-                statusLabel.Text = $"已加载: {webView.CoreWebView2.Source}";
+                statusLabel.Text = $"✅ 已加载: {webView.CoreWebView2.Source}";
             }
             else
             {
-                statusLabel.Text = "页面加载失败";
+                statusLabel.Text = "❌ 页面加载失败";
             }
         }
 
@@ -164,7 +228,7 @@ namespace OfficeHelp
             }
             catch (Exception ex)
             {
-                statusLabel.Text = $"检查更新失败: {ex.Message}";
+                statusLabel.Text = $"⚠️ 检查更新失败: {ex.Message}";
             }
         }
 
@@ -185,7 +249,7 @@ namespace OfficeHelp
                     notifyIcon.ShowBalloonTip(3000, "新邮件", $"{e.Sender}: {e.Subject}", ToolTipIcon.Info);
                 }
 
-                statusLabel.Text = $"收到新邮件: {e.Subject}";
+                statusLabel.Text = $"📧 收到新邮件: {e.Subject}";
             });
         }
 
@@ -203,7 +267,7 @@ namespace OfficeHelp
                 // 显示托盘通知
                 notifyIcon.ShowBalloonTip(3000, "提醒", $"{e.Title} - {e.Time}", ToolTipIcon.Warning);
 
-                statusLabel.Text = $"新提醒: {e.Title}";
+                statusLabel.Text = $"⏰ 新提醒: {e.Title}";
             });
         }
 
@@ -212,7 +276,7 @@ namespace OfficeHelp
             if (webView?.CoreWebView2 != null)
             {
                 webView.CoreWebView2.Reload();
-                statusLabel.Text = "正在刷新...";
+                statusLabel.Text = "🔄 正在刷新...";
             }
         }
 
